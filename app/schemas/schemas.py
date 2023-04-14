@@ -9,9 +9,12 @@ class UserSchema(BaseModel):
     class Config:
         the_schema = {
             "user_demo": {
-                "name": "Mauricio",
+                "username": "Mauricio",
                 "email": "mcombarizav@gmail.com",
-                "password": "123456"
+                "password": "123456",
+                "activate": 1,
+                "perfil": 3,
+                "company": "Servilla"
             }
         }
 

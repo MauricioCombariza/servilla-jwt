@@ -12,3 +12,6 @@ class User(Base):
     email = Column(Integer, primary_key=True, index=True)
     password = Column(String(100))
     activate = Column(Integer)
+    perfil = Column(Integer)
+    company = Column(String(50))
+    username = Column(String(30))

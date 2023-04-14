@@ -8,7 +8,7 @@ from app.database.connection import get_session
 from app.models.users import User
 from app.security.security import get_password_hash, verify_password
 from app.schemas.schemas import UserLoginSchema
-from app.auth.jwt_handler import signJWT
+from app.auth.jwt_handler import signJWT, decodeJWT
 
 from sqlalchemy.orm import Session
 
@@ -21,6 +21,10 @@ user_router = APIRouter(
 def show_users(db: Session = Depends(get_session)):
     usuarios = db.query(User).all()
     return usuarios
+
+@user_router.get('/me')
+def decode_token(token:str) -> dict:
+    return decodeJWT(token)
 
 
 @user_router.post("/signup")
@@ -83,7 +87,7 @@ async def sign_user_in(resp: Response,
     users = db.query(User).all()
     for user in users:
         if (email == user.email) and verify_password(password, user.password):
-            return signJWT(email)
+            return signJWT(email, user.perfil)
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
