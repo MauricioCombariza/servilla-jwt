@@ -1,17 +1,18 @@
 # Python
 import shutil
 import os
-
+from datetime import datetime
 # Pydantic
 
 # Fastapi
 from fastapi.responses import StreamingResponse
-from fastapi import APIRouter, Path, HTTPException
+from fastapi import APIRouter, Path, HTTPException, Form
 from fastapi.params import Depends
 
 # Terceros
 from sqlalchemy.orm import Session
 import pandas as pd
+import numpy as np
 
 # Modulos locales
 from app.models.events import Historico
@@ -153,6 +154,79 @@ async def get_image(
          
     else:
         raise HTTPException(status_code=404, detail="Orden no encontrada")
+    
 
+@event_router.post(
+    path="/envios/",
+    summary="Trae todas los envios de los courrier a nivel nacional",
+    # dependencies=[Depends(jwtBearer())]
+)
+async def get_enviosCourrier(
+    db: Session = Depends(get_session),
+    fechaInicio: str = Form(
+        ...,
+        title="Fecha inicio",
+        description="Ingrese la fecha desde la cual quiere ver los envios [yyyy-mm-dd]",
+        example="2023-03-01"),
+    fechaFin: str = Form(
+        ...,
+        title="Fecha final",
+        description="Ingrese la fecha hasta la cual quiere ver los envios [yyyy-mm-dd]",
+        example="2023-03-31"
+    ),
+    servicio: int = Form (
+        ...,
+        title="Numero del servicio del que desea el reporte",
+        description="Numero de servicio",
+        example=1010
+    ),
+    informe: int = Form(
+        ...,
+        title="Tipo de informe",
+        description="Informe consolidado [1], por courrier [2]"
+    )
+
+) -> dict:
+    df = pd.read_csv('/mnt/c/Users/mcomb/OneDrive/Escritorio/Carvajal/python/basesHisto.csv', low_memory=False)
+    # data = 'SELECT * FROM histo'
+    if df:
+        # df = pd.read_sql(data, engine)
+        # df = pd.read_csv('./basesHisto.csv', low_memory=False)
+        format1 = '%Y.%m.%d'
+        dfC = df.copy()
+        dfC = dfC[['serial','no_entidad','servicio', 'orden','nombred', 'dirdes1', 'ciudad1', 'cod_sec',  'retorno','ret_esc',  'planilla',
+                'f_emi', 'f_lleva', 'cod_men', 'dir_num', 'comentario',  'identdes']]
+        Planilla = dfC['planilla'].notnull()
+        dfC = dfC[Planilla]
+        # dfC['cod_men'] = pd.to_numeric(dfC['cod_men'], errors='coerce').fillna(0).astype(np.int64)
+        # MEN = dfC['cod_men'] > 729
+        # dfC = dfC[MEN]
+        SERVICIO = dfC['servicio'] == servicio
+        dfC['fecha'] = dfC.apply(lambda x: datetime.strptime(x['f_emi'], format1).date(), axis=1)
+        start_date = pd.to_datetime(fechaInicio).date()
+        end_date = pd.to_datetime(fechaFin).date()
+        INICIO = dfC['fecha'] > start_date
+        FIN = dfC['fecha'] < end_date
+        PEN = dfC['ret_esc'] == 'i'
+        LLEV = dfC['ret_esc'] == 'p'
+        RETL = dfC['retorno'] == 'l'
+        RETP = dfC['retorno'] == 'p'
+        dfC = dfC[SERVICIO]
+        dfC = dfC[INICIO]
+        dfC = dfC[((PEN | LLEV))]
+        dfC = dfC[(RETL | RETP)]
+        courriers = dfC['cod_men'].unique()
+        if informe == 2:
+            for i in range(len(courriers)):
+                for j in range(len(dfC)):
+                    options = [courriers[i]]
+                    rslt_df = dfC[dfC['cod_men'].isin(options)]
+                libro = '/mnt/c/Users/mcomb/OneDrive/Escritorio/Carvajal/python/courrier/pendientes/' + str(courriers[i]) + 'servicio_' + str(servicio) + 'long'+str(len(rslt_df)) + '.xlsx'
+                rslt_df.iloc[:, 0:8].to_excel(libro, index=None)
+        else:
+            libro = '/mnt/c/Users/mcomb/OneDrive/Escritorio/Carvajal/python/courrier/pendientes/' + 'consolidado ' + 'servicio_' + str(servicio) + 'long'+str(len(dfC)) + '.xlsx'
+            dfC.iloc[:, 0:8].to_excel(libro, index=None)        
+    else:
+        raise HTTPException(status_code=404, detail="Problemas en el servidor")
 
 

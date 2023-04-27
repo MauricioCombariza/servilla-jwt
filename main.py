@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.connection import conn
 from app.routes.users import user_router
 from app.routes.events import event_router
+from app.routes.documents import document_router
 
 import uvicorn
 
@@ -28,6 +29,7 @@ app.add_middleware(
 
 app.include_router(user_router,  prefix="/user")
 app.include_router(event_router, prefix="/event")
+app.include_router(document_router, prefix="/document")
 
 
 @app.on_event("startup")

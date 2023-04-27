@@ -19,7 +19,15 @@ metadata = MetaData()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+
 def get_session():
+    try:
+        session = SessionLocal()
+        yield session
+    finally:
+        session.close()
+
+def get_df():
     try:
         session = SessionLocal()
         yield session
