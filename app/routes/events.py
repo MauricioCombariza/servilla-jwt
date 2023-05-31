@@ -28,7 +28,7 @@ event_router = APIRouter(
 @event_router.get(
     path="/serial/{serial}",
     summary="Muestra el serial indicado",
-    # dependencies=[Depends(jwtBearer())]
+    dependencies=[Depends(jwtBearer())]
 )
 async def get_serial(
 
@@ -48,7 +48,8 @@ async def get_serial(
 
 @event_router.get(
     path="/dirnum/{dirnum}",
-    summary="Muestra los resultados de una direccion numerica especifica"
+    summary="Muestra los resultados de una direccion numerica especifica",
+    dependencies=[Depends(jwtBearer())]
 )
 async def get_dirnum(
     dirnum: str = Path(

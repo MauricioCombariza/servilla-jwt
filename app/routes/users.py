@@ -34,6 +34,16 @@ async def sign_user_up(db: Session = Depends(get_session),
         title="Email o correo electrónico",
         description="Email con el que desea registrarse",
         example="mauricio.combariza@gruposervilla.com"),
+    username: str = Form(
+        ...,
+        title="Usuario",
+        description="Escriba el nombre de su usuario con una sola palabra",
+        example="NombreApellido"),
+    company: str = Form(
+        ...,
+        title="Compañia",
+        description="Nombre de la compañia a la que pertenece",
+        example="Servilla SAS"),
     password: str = Form(
         ...,
         title="Password o contraseña",
@@ -62,7 +72,7 @@ async def sign_user_up(db: Session = Depends(get_session),
             detail="El password es diferente de su confirmación !!"
         )
 
-    user = User(email=email, password=get_password_hash(password), activate=1)
+    user = User(email=email, username=username, company=company, password=get_password_hash(password), activate=1, perfil=3)
     db.add(user)
     db.commit()
     return {
