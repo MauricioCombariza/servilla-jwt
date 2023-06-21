@@ -80,26 +80,39 @@ async def sign_user_up(db: Session = Depends(get_session),
     }
 
 
+
 @user_router.post("/login")
 async def sign_user_in(resp: Response,
                        db: Session = Depends(get_session),
-                       email: EmailStr = Form(
-        ...,
-        title="Email o correo electrónico",
-        description="Email con el que desea registrarse",
-        example="mauricio.combariza@gruposervilla.com"),
-    password: str = Form(
-        ...,
-        title="Password o contraseña",
-        description="Contraseña única de mínimo 6 caracteres y máximo 14",
-        example="123456")
-) -> dict:
-    users = db.query(User).all()
-    for user in users:
-        if (email == user.email) and verify_password(password, user.password):
-            return signJWT(email, user.perfil)
+                       email: EmailStr = Form(..., title="Email o correo electrónico",
+                                              description="Email con el que desea registrarse",
+                                              example="mauricio.combariza@gruposervilla.com"),
+                       password: str = Form(..., title="Password o contraseña",
+                                             description="Contraseña única de mínimo 6 caracteres y máximo 14",
+                                             example="123456")
+                       ) -> dict:
+    user = find_user(db, email, password)
+    if user:
+        token = signJWT(email, user.perfil, user.username)
+        resp.headers["Authorization"] = f"Bearer {token}"
+        user_data = {
+            "email": email,
+            "perfil": user.perfil,
+            "username": user.username,
+            "activate": user.activate,
+            "perfil": user.perfil,
+            "company": user.company
+        }
+        return {"token": token, "user": user_data}
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Verifique su email, password o que siga activo en la plataforma!!, haga click en registrarse!!"
+            detail="Verifique su email, contraseña o que siga activo en la plataforma. ¡Haga clic en registrarse!"
         )
+
+def find_user(db: Session, email: str, password: str) -> User:
+    users = db.query(User).all()
+    for user in users:
+        if email == user.email and verify_password(password, user.password):
+            return user
+    return None

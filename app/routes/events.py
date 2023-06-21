@@ -5,14 +5,16 @@ from datetime import datetime
 # Pydantic
 
 # Fastapi
-from fastapi.responses import StreamingResponse
-from fastapi import APIRouter, Path, HTTPException, Form
+from fastapi.responses import FileResponse
+from fastapi import APIRouter, Path, HTTPException, Form, Response
 from fastapi.params import Depends
+from fastapi.staticfiles import StaticFiles
 
 # Terceros
 from sqlalchemy.orm import Session
 import pandas as pd
 import numpy as np
+from openpyxl.workbook import Workbook
 
 # Modulos locales
 from app.models.events import Historico
@@ -38,6 +40,7 @@ async def get_serial(
         example="2208092647004648"
     ),
         db: Session = Depends(get_session)):
+    
     serial = db.query(Historico).filter(Historico.serial == serial).all()
 
     if serial:
@@ -230,4 +233,53 @@ async def get_enviosCourrier(
     else:
         raise HTTPException(status_code=404, detail="Problemas en el servidor")
 
+static_folder = "./static/pendientes"  # Ruta de la carpeta de archivos estáticos
 
+static_files = StaticFiles(directory=static_folder)
+event_router.mount("/static", static_files)
+
+@event_router.post(
+    path="/pendientes/mensajero",
+    summary="Trae todos los pendientes de los mensajeros de todos los clientes",
+    # dependencies=[Depends(jwtBearer())]
+)
+async def get_pendientesMensajeros(
+    db: Session = Depends(get_session),
+    mensajero: str = Form(
+        ...,
+        title="Mensajero",
+        description="Ingrese el número del código del mensajero del cual desea sus pendientes",
+        example="30"),
+ ):
+    directorio_destino = "/mnt/c/Users/mcomb/OneDrive/Escritorio/Pendientes"
+    # directorio_destino = "./static/pendientes/"
+    if not os.path.exists(directorio_destino):
+        os.makedirs(directorio_destino) 
+    registros_filtrados = db.query(Historico).filter(Historico.cod_men == mensajero).all()
+    datos = {
+        "serial": [registro.serial for registro in registros_filtrados],
+        "retorno": [registro.retorno for registro in registros_filtrados],
+        "ret_esc": [registro.ret_esc for registro in registros_filtrados],
+        "orden": [registro.orden for registro in registros_filtrados],
+        "planilla": [registro.planilla for registro in registros_filtrados],
+        "fecha_emision": [registro.f_emi for registro in registros_filtrados],
+        "fecha_lleva": [registro.f_lleva for registro in registros_filtrados],
+        "sector": [registro.cod_sec for registro in registros_filtrados],
+        "compañia": [registro.no_entidad for registro in registros_filtrados],
+        "nombre": [registro.nombred for registro in registros_filtrados],
+        "direccion": [registro.dirdes1 for registro in registros_filtrados],
+    }
+    if datos:
+        df = pd.DataFrame(datos)        
+        lleva = df['retorno'] == 'l'
+        escI = df['ret_esc'] == 'i'
+        df = df[lleva & escI]
+        archivo = 'pendientes.csv'
+        # archivo = 'pendientes_'+ str(mensajero) + '.csv'
+        ruta_archivo = os.path.join(directorio_destino, archivo)
+        df.to_csv(ruta_archivo)
+        
+        # df.to_excel(('/mnt/c/Users/mcomb/OneDrive/Escritorio/Carvajal/python/pendientes/{}').format(archivo))
+        return FileResponse(ruta_archivo, filename=archivo)
+    else:
+        raise HTTPException(status_code=404, detail="Problemas en el servidor")

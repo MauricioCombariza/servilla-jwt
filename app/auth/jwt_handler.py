@@ -18,10 +18,11 @@ def token_response(token: str):
 # Esta función firma los tokens
 
 
-def signJWT(email: str, perfil: int):
+def signJWT(email: str, perfil: int, username: str):
     payload = {
         "userID": email,
         "perfilID": perfil,
+        "username": username,
         "expiry": time.time() + 600
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)

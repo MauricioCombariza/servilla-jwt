@@ -22,6 +22,10 @@ class UserSchema(BaseModel):
 class UserLoginSchema(BaseModel):
     email: EmailStr = Field(default=None)
     password: str = Field(default=None)
+    username: str = Field(default=None)
+    activate: int = Field(default=1)
+    perfil: int = Field(default=1)
+    company: str = Field(default=None)
 
     class Config:
         the_schema = {
