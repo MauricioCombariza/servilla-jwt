@@ -1,5 +1,7 @@
 from decouple import config
-from pydantic import BaseSettings
+# from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
+
 
 db_host = config('DB_HOST')
 db_name = config('DB_NAME')
