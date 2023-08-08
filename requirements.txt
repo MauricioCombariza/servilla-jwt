@@ -9,7 +9,7 @@ fastapi==0.101.0
 greenlet==2.0.2
 h11==0.14.0
 idna==3.4
-joblib @ file:///croot/joblib_1685113087166/work
+# joblib @ file:///croot/joblib_1685113087166/work
 mkl-fft==1.3.6
 mkl-random @ file:///work/mkl/mkl_random_1682950433854/work
 mkl-service==2.4.0
