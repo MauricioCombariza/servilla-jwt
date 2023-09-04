@@ -21,5 +21,5 @@ COPY . .
 EXPOSE 8000
 
 # Command to activate the Conda environment and run your FastAPI application
-# CMD [ "bash", "-c", "source activate $(head -1 environment.yml | cut -d' ' -f2) && uvicorn main:app --host 127.0.0.1 --port 8000 --reload" ]
-CMD [ "bash", "-c", "source activate $(head -1 environment.yml | cut -d' ' -f2) && python3 main.py" ]
+CMD [ "bash", "-c", "source activate $(head -1 environment.yml | cut -d' ' -f2) && uvicorn main:app --host 127.0.0.1 --port 8000 --reload" ]
+# CMD [ "bash", "-c", "source activate $(head -1 environment.yml | cut -d' ' -f2) && python3 main.py" ]
