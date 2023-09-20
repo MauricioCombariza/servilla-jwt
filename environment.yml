@@ -47,6 +47,7 @@ dependencies:
   - pip:
       - annotated-types==0.5.0
       - anyio==3.7.1
+      - chardet==5.2.0
       - click==8.1.6
       - dnspython==2.4.1
       - email-validator==2.0.0.post2
@@ -75,5 +76,6 @@ dependencies:
       - starlette==0.27.0
       - typing-extensions==4.7.1
       - tzdata==2023.3
+      - urllib3==2.0.4
       - uvicorn==0.23.2
 prefix: /home/mauro/anaconda3/envs/servilla-jwt
