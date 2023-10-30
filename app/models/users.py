@@ -13,5 +13,5 @@ class User(Base):
     password = Column(String(100))
     activate = Column(Integer)
     perfil = Column(Integer)
-    company = Column(String(50))
+    company = Column(Integer)
     username = Column(String(30))

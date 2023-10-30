@@ -53,3 +53,4 @@ class Historico(Base):
     servicio = Column(String(255))
     usuario = Column(String(255))
     valor = Column(String(255))
+    cod_ent = Column(String(255))

@@ -39,11 +39,6 @@ async def sign_user_up(db: Session = Depends(get_session),
         title="Usuario",
         description="Escriba el nombre de su usuario con una sola palabra",
         example="NombreApellido"),
-    company: str = Form(
-        ...,
-        title="Compañia",
-        description="Nombre de la compañia a la que pertenece",
-        example="Servilla SAS"),
     password: str = Form(
         ...,
         title="Password o contraseña",
@@ -72,7 +67,7 @@ async def sign_user_up(db: Session = Depends(get_session),
             detail="El password es diferente de su confirmación !!"
         )
 
-    user = User(email=email, username=username, company=company, password=get_password_hash(password), activate=1, perfil=3)
+    user = User(email=email, username=username, password=get_password_hash(password), activate=1, perfil=3, company=1)
     db.add(user)
     db.commit()
     return {
@@ -93,7 +88,7 @@ async def sign_user_in(resp: Response,
                        ) -> dict:
     user = find_user(db, email, password)
     if user:
-        token = signJWT(email, user.perfil, user.username)
+        token = signJWT(email, user.perfil, user.username, user.company)
         resp.headers["Authorization"] = f"Bearer {token}"
         user_data = {
             "email": email,

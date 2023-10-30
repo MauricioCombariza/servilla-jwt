@@ -14,7 +14,7 @@ class UserSchema(BaseModel):
                 "password": "123456",
                 "activate": 1,
                 "perfil": 3,
-                "company": "Servilla"
+                "company": 1
             }
         }
 
@@ -25,7 +25,7 @@ class UserLoginSchema(BaseModel):
     username: str = Field(default=None)
     activate: int = Field(default=1)
     perfil: int = Field(default=1)
-    company: str = Field(default=None)
+    company: int = Field(default=1)
 
     class Config:
         the_schema = {
