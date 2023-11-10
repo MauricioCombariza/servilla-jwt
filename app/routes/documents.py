@@ -9,7 +9,7 @@ from datetime import datetime
 
 # Fastapi
 from fastapi.responses import StreamingResponse, FileResponse
-from fastapi import APIRouter, Path, HTTPException, Form, File, UploadFile, Request
+from fastapi import APIRouter, Path, HTTPException, Form, File, UploadFile, Request, Query
 from fastapi.params import Depends
 
 # Terceros
@@ -135,8 +135,10 @@ def gestion(
     companyID = payload['companyID']
 
     # Realiza la consulta SQLAlchemy y selecciona solo las columnas deseadas
-    fecha_inicial = datetime.strptime(fecha_inicial, '%Y.%m.%d')
-    fecha_final = datetime.strptime(fecha_final, '%Y.%m.%d')
+    # fecha_inicial = datetime.strptime(fecha_inicial, '%Y.%m.%d')
+    # fecha_final = datetime.strptime(fecha_final, '%Y.%m.%d')
+    fecha_inicial = int(fecha_inicial.replace(".", ""))
+    fecha_final = int(fecha_final.replace(".", ""))
 
     if companyID == 11:
         resultados = db.query(Historico).order_by(Historico.orden.desc()).limit(500000).all() 
@@ -149,13 +151,14 @@ def gestion(
 
     # Crea un DataFrame a partir de los resultados reformateados
     df = pd.DataFrame(reformateados, columns=['serial', 'entidad','fecha_inicio', 'orden', 'retorno', 'ret_esc', 'motivo'])
-    df['fecha_inicio'] = pd.to_datetime(df['fecha_inicio'], format='%Y.%m.%d', errors='coerce')
+    # df['fecha_inicio'] = pd.to_datetime(df['fecha_inicio'], format='%Y.%m.%d', errors='coerce')
     # Eliminar las horas y los minutos, dejando solo la fecha
-    df['fecha_inicio'] = df['fecha_inicio'].dt.date
+    # df['fecha_inicio'] = df['fecha_inicio'].dt.date
+    df['fecha_inicio'] = df['fecha_inicio'].str.replace('.', '').astype(int)
 
     # Convierte fecha_inicial y fecha_final a objetos date
-    fecha_inicial = fecha_inicial.date()
-    fecha_final = fecha_final.date()
+    # fecha_inicial = fecha_inicial.date()
+    # fecha_final = fecha_final.date()
 
     fechasFiltro = (df['fecha_inicio'] >= fecha_inicial) & (df['fecha_inicio'] <= fecha_final)
     df = df[fechasFiltro]
@@ -176,3 +179,87 @@ def gestion(
 
     # Devuelve el archivo Excel para descargar
     return FileResponse(temp_file.name, filename="gestion.xlsx")
+
+
+@document_router.get(
+        path="/documentos/gestionEnvios",
+        summary="Descarga un archivo con todos los envíos dentro de las fechas solicitadas formato aaaa.mm.dd",
+        dependencies=[Depends(jwtBearer())]
+)
+def gestionEnvios(
+    request: Request,
+    fecha_inicial: str,
+    fecha_final: str,
+    page: int = Query(1, description="Número de página, por defecto 1"),
+    items_per_page: int = Query(20, description="Número de resultados por página, por defecto 20"),
+    db: Session = Depends(get_session)
+    ):
+    authorization = request.headers.get("Authorization")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Esquema de autenticación inválido"
+        )
+
+    # Extrae el token sin el prefijo "Bearer"
+    token = authorization.split(" ")[1]
+    
+    # Decodifica el token y obtén el payload
+    payload = decodeJWT(token)
+
+    companyID = payload['companyID']
+
+    # Realiza la consulta SQLAlchemy y selecciona solo las columnas deseadas
+    fecha_inicial = datetime.strptime(fecha_inicial, '%Y.%m.%d')
+    fecha_final = datetime.strptime(fecha_final, '%Y.%m.%d')
+
+    offset = (page - 1) * items_per_page
+    limit = offset + items_per_page
+
+    if companyID == 11:
+        resultados = db.query(Historico).order_by(Historico.orden.desc()).offset(offset).limit(limit).all()
+        total_items = db.query(Historico).count()
+    else:
+        resultados = db.query(Historico).filter(Historico.cod_ent == companyID).order_by(Historico.serial.desc()).offset(offset).limit(limit).all()
+        total_items = db.query(Historico).filter(Historico.cod_ent == companyID).count()
+
+    # Verificar si no hay resultados
+    if not resultados:
+        return {"data": [], "total_items": 0, "page": page, "items_per_page": items_per_page}
+
+    # Reformatea los resultados para que tengan la forma correcta
+    reformateados = [(row.serial, row.no_entidad, row.f_emi, row.orden, row.retorno, row.ret_esc, row.motivo) for row in resultados]
+
+    # Verificar si la lista reformateados está vacía
+    if not reformateados:
+        return {"data": [], "total_items": 0, "page": page, "items_per_page": items_per_page}
+
+    # Crea un DataFrame a partir de los resultados reformateados
+    df = pd.DataFrame(reformateados, columns=['serial', 'entidad','fecha_inicio', 'orden', 'retorno', 'ret_esc', 'motivo'])
+    print('df1: ',df.tail(50))
+    df['fecha_inicio'] = pd.to_datetime(df['fecha_inicio'], format='%Y.%m.%d', errors='coerce')
+    
+    # Eliminar las horas y los minutos, dejando solo la fecha
+    df['fecha_inicio'] = df['fecha_inicio'].dt.date
+    # Convierte fecha_inicial y fecha_final a objetos date
+    fecha_inicial = fecha_inicial.date()
+    fecha_final = fecha_final.date()
+
+    print('Fecha: ', fecha_inicial)
+
+    fechasFiltro = (df['fecha_inicio'] >= fecha_inicial) & (df['fecha_inicio'] <= fecha_final)
+    df = df[fechasFiltro]
+    print('df2: ',df.head(100))
+    # Usar numpy.where para asignar valores a la columna 'estado'
+    df['estado'] = np.where((df['ret_esc'] == 'E') | (df['retorno'] == 'E'), 'Entrega',
+                np.where(df['retorno'] == 'f', 'Envio no ha llegado, faltante',
+                np.where(df['retorno'] == 'o', 'Devolucion en proceso',
+                np.where(df['retorno'] == 'D', 'Motivo',
+                np.where((df['ret_esc'] == 'i') & (df['retorno'].isin(['l', 'j'])), 'Distribución',
+                np.where(df['retorno'] == 'i', 'Alistamiento', 'Otro'))))))
+    
+    df = df[['serial', 'entidad', 'fecha_inicio', 'orden', 'estado']]
+
+    print(df)
+
+    return {"data": df.to_dict(orient="records"), "total_items": total_items, "page": page, "items_per_page": items_per_page}

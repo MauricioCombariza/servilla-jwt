@@ -98,6 +98,7 @@ async def sign_user_in(resp: Response,
             "perfil": user.perfil,
             "company": user.company
         }
+        print('User: ',user_data)
         return {"token": token, "user": user_data}
     else:
         raise HTTPException(
