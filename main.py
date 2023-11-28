@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.connection import conn
 from app.routes.users import user_router
 from app.routes.events import event_router
-from app.routes.documents import document_router
+from app.routes.documents.documents import document_router
 
 import uvicorn
 

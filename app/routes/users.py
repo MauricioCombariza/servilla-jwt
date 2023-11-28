@@ -7,10 +7,11 @@ from fastapi import APIRouter, HTTPException, Form, status, Body
 from app.database.connection import get_session
 from app.models.users import User
 from app.security.security import get_password_hash, verify_password
-from app.schemas.schemas import UserLoginSchema
+from app.schemas.schemas import LoginForm
 from app.auth.jwt_handler import signJWT, decodeJWT
 
 from sqlalchemy.orm import Session
+
 
 user_router = APIRouter(
     tags=["User"],
@@ -98,7 +99,7 @@ async def sign_user_in(resp: Response,
             "perfil": user.perfil,
             "company": user.company
         }
-        print('User: ',user_data)
+        # print('User: ',user_data, 'Token:', token)
         return {"token": token, "user": user_data}
     else:
         raise HTTPException(

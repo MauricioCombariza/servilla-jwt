@@ -34,3 +34,7 @@ class UserLoginSchema(BaseModel):
                 "password": "123456"
             }
         }
+
+class LoginForm(BaseModel):
+    email: EmailStr
+    password: str
