@@ -14,6 +14,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 import pandas as pd
 import numpy as np
+import os
 
 #Modulos locales
 from app.database.connection import get_session, engine
@@ -47,9 +48,13 @@ def load_dataframes(ordenInicio: int = Query(..., gt=0, description="Valor de or
         '''
         dfC = pd.read_sql_query(data, engine)
         
-        dirNum_path = '/home/mauro/personalProjects/python/fastapi/servilla-jwt/app/routes/bases/dirNum.xlsx'
-        cuenta_path = '/home/mauro/personalProjects/python/fastapi/servilla-jwt/app/routes/bases/cuenta.xlsx'
-        motivo_path = '/home/mauro/personalProjects/python/fastapi/servilla-jwt/app/routes/bases/motivo.xlsx'
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        dirNum_path = os.path.join(current_directory, 'dirNum.xlsx')
+        cuenta_path = os.path.join(current_directory, 'cuenta.xlsx')
+        motivo_path = os.path.join(current_directory, 'motivo.xlsx')
+        # dirNum_path = '/home/mauro/personalProjects/python/fastapi/servilla-jwt/app/routes/bases/dirNum.xlsx'
+        # cuenta_path = '/home/mauro/personalProjects/python/fastapi/servilla-jwt/app/routes/bases/cuenta.xlsx'
+        # motivo_path = '/home/mauro/personalProjects/python/fastapi/servilla-jwt/app/routes/bases/motivo.xlsx'
 
         df_dirNum = pd.read_excel(dirNum_path)
         df_cuenta = pd.read_excel(cuenta_path)

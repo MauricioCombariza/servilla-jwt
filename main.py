@@ -5,6 +5,7 @@ from app.database.connection import conn
 from app.routes.users import user_router
 from app.routes.events import event_router
 from app.routes.documents.documents import document_router
+from app.routes.Automate.automate import automate_router
 
 import uvicorn
 
@@ -14,7 +15,10 @@ app = FastAPI()
 
 # Establezco una ruta para evitar los cors
 
-origins = ["*"]
+origins = [
+    "http://localhost:3000",
+    "*"
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +34,7 @@ app.add_middleware(
 app.include_router(user_router,  prefix="/user")
 app.include_router(event_router, prefix="/event")
 app.include_router(document_router, prefix="/document")
+app.include_router(automate_router, prefix="/automate")
 
 
 @app.on_event("startup")
