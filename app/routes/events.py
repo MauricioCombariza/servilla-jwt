@@ -114,7 +114,7 @@ async def get_dirnum(
 
     Muestra todos los registros de una orden específica 
 
-    Requerimientos:
+    Requerimientos 
         -
 
     """
