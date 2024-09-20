@@ -29,54 +29,76 @@ event_router = APIRouter(
     tags=["Events"]
 )
 
-
 @event_router.get(
     path="/serial/{serial}",
-    summary="Muestra el serial indicado",
-    dependencies=[Depends(jwtBearer())]
+    summary="Muestra el serial indicado"
 )
 async def get_serial(
-    request: Request,
     serial: str = Path(
         ...,
-        description="Ingrese el numero serial que desea consultar",
+        description="Ingrese el número serial que desea consultar",
         example="2208092647004648"
     ),
-        db: Session = Depends(get_session)
+    db: Session = Depends(get_session)
 ):
-    authorization = request.headers.get("Authorization")
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Esquema de autenticación inválido"
-        )
-
-    # Extrae el token sin el prefijo "Bearer"
-    token = authorization.split(" ")[1]
+    # Aquí asumimos que no es necesario verificar un token ni obtener `companyID`.
     
-    # Decodifica el token y obtén el payload
-    payload = decodeJWT(token)
+    # Consulta en la base de datos directamente.
+    serial_data = db.query(Historico).filter(Historico.serial == serial).all()
 
-    companyID = payload['companyID']
-
-    if companyID == 11:
-        serial = db.query(Historico).filter(Historico.serial == serial).all()
-    else:
-        serial = db.query(Historico).filter(
-            Historico.serial == serial,
-            Historico.cod_ent == companyID
-        ).all()
-
-    if serial:
-        return serial
+    if serial_data:
+        return serial_data
     else:
         raise HTTPException(status_code=404, detail="Serial no encontrado")
+
+
+# @event_router.get(
+#     path="/serial/{serial}",
+#     summary="Muestra el serial indicado",
+#     # dependencies=[Depends(jwtBearer())]
+# )
+# async def get_serial(
+#     request: Request,
+#     serial: str = Path(
+#         ...,
+#         description="Ingrese el numero serial que desea consultar",
+#         example="2208092647004648"
+#     ),
+#         db: Session = Depends(get_session)
+# ):
+#     authorization = request.headers.get("Authorization")
+#     if not authorization or not authorization.startswith("Bearer "):
+#         raise HTTPException(
+#             status_code=401,
+#             detail="Esquema de autenticación inválido"
+#         )
+
+#     # Extrae el token sin el prefijo "Bearer"
+#     token = authorization.split(" ")[1]
+    
+#     # Decodifica el token y obtén el payload
+#     payload = decodeJWT(token)
+
+#     companyID = payload['companyID']
+
+#     if companyID == 11:
+#         serial = db.query(Historico).filter(Historico.serial == serial).all()
+#     else:
+#         serial = db.query(Historico).filter(
+#             Historico.serial == serial,
+#             Historico.cod_ent == companyID
+#         ).all()
+
+#     if serial:
+#         return serial
+#     else:
+#         raise HTTPException(status_code=404, detail="Serial no encontrado")
 
 
 @event_router.get(
     path="/dirnum/{dirnum}",
     summary="Muestra los resultados de una direccion numerica especifica",
-    dependencies=[Depends(jwtBearer())]
+    # dependencies=[Depends(jwtBearer())]
 )
 async def get_dirnum(
     dirnum: str = Path(
@@ -311,7 +333,7 @@ async def get_pendientesMensajeros(
 
 @event_router.get(
     path="/ventasMes",
-    summary="Resumen de las vendas mensuales",
+    summary="Resumen de las ventas mensuales",
     # dependencies=[Depends(jwtBearer())]
 )
 async def get_ventas_mes(

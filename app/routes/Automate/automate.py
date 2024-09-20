@@ -43,15 +43,21 @@ def unir_entidades():
 def unir_archivos():
     script_directory = Path(__file__).parent
     ruta_archivo = script_directory/'archivos'/'bancos.xlsx'
+    
+    try:
+        if os.path.exists(ruta_archivo):
+            print(f"El archivo {ruta_archivo} existe.")
+            procesar_archivos(script_directory/"archivos/base/base.xlsx",
+                            script_directory/"archivos/",
+                            resultado_excel=script_directory/"archivos/unionArchivos.xlsx",
+                            excluir=script_directory/"archivos/contratos.xlsx")
+        else:
+            print(f"El archivo {ruta_archivo} no existe.")
+        return {"message": "Operación exitosa"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
        
-    if os.path.exists(ruta_archivo):
-        print(f"El archivo {ruta_archivo} existe.")
-        procesar_archivos(script_directory/"archivos/base/base.xlsx",
-                          script_directory/"archivos/",
-                          resultado_excel=script_directory/"archivos/unionArchivos.xlsx",
-                          excluir=script_directory/"archivos/contratos.xlsx")
-    else:
-        print(f"El archivo {ruta_archivo} no existe.")
+    
 
 @automate_router.post("/calcular_consolidado/")
 def calcular_consolidado():

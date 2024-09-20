@@ -16,6 +16,7 @@ app = FastAPI()
 # Establezco una ruta para evitar los cors
 
 origins = [
+    "https://servilla.com.co",
     "http://localhost:3000",
     "*"
     ]
